@@ -14,36 +14,35 @@ export default function LandingPage() {
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-background">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    Revolutionizing Emergency Care with AI-Powered Triage
-                  </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    CriticalFirst optimizes patient flow, reduces wait times, and improves outcomes with intelligent, real-time decision support.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild size="lg">
-                    <Link href="/dashboard">
-                      Launch Dashboard
-                    </Link>
-                  </Button>
-                </div>
+        <section className="relative w-full flex items-center justify-center text-center text-white h-[70vh] md:h-[60vh] bg-background">
+          {heroImage && (
+            <Image
+              src={heroImage.imageUrl}
+              alt={heroImage.description}
+              fill
+              className="object-cover"
+              data-ai-hint={heroImage.imageHint}
+              priority
+            />
+          )}
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative container px-4 md:px-6">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline">
+                  Revolutionizing Emergency Care with AI-Powered Triage
+                </h1>
+                <p className="max-w-[700px] mx-auto text-gray-200 md:text-xl">
+                  CriticalFirst optimizes patient flow, reduces wait times, and improves outcomes with intelligent, real-time decision support.
+                </p>
               </div>
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  width={600}
-                  height={400}
-                  className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
-                  data-ai-hint={heroImage.imageHint}
-                />
-              )}
+              <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/dashboard">
+                    Launch Dashboard
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
