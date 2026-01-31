@@ -10,7 +10,7 @@ export default function LandingPage({
   params,
   searchParams,
 }: {
-  params: { [key: string]: string };
+  params: { [key: string]: string | string[] | undefined };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-image');
