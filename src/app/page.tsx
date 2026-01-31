@@ -38,8 +38,8 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Button asChild size="lg" variant="secondary">
-                  <Link href="/dashboard">
-                    Launch Dashboard
+                  <Link href="/admin/login">
+                    Admin Login
                   </Link>
                 </Button>
               </div>

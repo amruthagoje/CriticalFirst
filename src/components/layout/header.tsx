@@ -16,9 +16,9 @@ export function Header() {
           CriticalFirst
         </h1>
       </Link>
-      {pathname !== '/dashboard' && (
+      {pathname === '/' && (
         <Button asChild>
-          <Link href="/dashboard">Launch Dashboard</Link>
+          <Link href="/admin/login">Admin Login</Link>
         </Button>
       )}
     </header>
