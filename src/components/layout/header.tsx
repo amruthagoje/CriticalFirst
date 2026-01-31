@@ -38,9 +38,14 @@ export function Header() {
       )}
 
       {isFullUser && (
-         <Button variant="outline" onClick={handleLogout}>
-            Log Out
-         </Button>
+         <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+                Signed in as <span className="font-semibold">{user.email}</span>
+            </p>
+            <Button variant="outline" onClick={handleLogout}>
+                Log Out
+            </Button>
+         </div>
       )}
     </header>
   );
