@@ -30,7 +30,6 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      age: '' as any,
       symptoms: '',
     },
   });
@@ -86,7 +85,7 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
                 <FormItem>
                   <FormLabel>Age</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 42" {...field} />
+                    <Input type="number" placeholder="e.g., 42" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
