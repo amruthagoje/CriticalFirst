@@ -41,7 +41,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:grid-cols-3">
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-           {isLoading ? <Skeleton className="h-[70vh] w-full" /> : <PatientQueue patients={patients} onUpdatePriority={updatePriority} />}
+           {isLoading ? <Skeleton className="h-[60vh] lg:h-[70vh] w-full" /> : <PatientQueue patients={patients} onUpdatePriority={updatePriority} />}
         </div>
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
             <PatientRegistrationForm onAddPatient={addPatient} />

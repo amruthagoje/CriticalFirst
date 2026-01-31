@@ -32,7 +32,7 @@ const priorityColorClass: Record<Priority, string> = {
 
 export function PatientQueue({ patients, onUpdatePriority }: PatientQueueProps) {
   return (
-    <Card className="flex flex-col h-[70vh]">
+    <Card className="flex flex-col h-[60vh] lg:h-[70vh]">
       <CardHeader>
         <CardTitle>Patient Queue</CardTitle>
         <CardDescription>Live view of patients sorted by triage priority.</CardDescription>
