@@ -6,7 +6,13 @@ import { Header } from '@/components/layout/header';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export default function LandingPage() {
+export default function LandingPage({
+  params,
+  searchParams,
+}: {
+  params: { [key: string]: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-image');
 
   return (
