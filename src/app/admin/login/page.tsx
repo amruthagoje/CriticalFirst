@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
     <div className="flex flex-col min-h-screen bg-muted/40">
         <Header />
         <main className="flex flex-1 items-center justify-center p-6">
-            <Card className="w-full max-w-sm bg-transparent border-none shadow-none">
+            <Card className="w-full max-w-sm">
                 <form onSubmit={handleSubmit}>
                     <CardHeader className="text-center">
                         <CardTitle className="text-2xl">{isSignUp ? 'Create Admin Account' : 'Admin Login'}</CardTitle>
