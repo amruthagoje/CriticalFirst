@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Patient, Priority } from '@/lib/types';
 import { semanticTriage } from '@/ai/flows/semantic-triage';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -26,6 +27,7 @@ interface PatientRegistrationFormProps {
 
 export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,10 +47,26 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
       form.reset();
     } catch (error) {
       console.error("AI Triage failed, using fallback:", error);
-      // Offline fallback: rule-based (simplified here)
-      const priorities: Priority[] = ['Low', 'Medium', 'High'];
-      const randomPriority = priorities[Math.floor(Math.random() * 3)];
-      onAddPatient({ ...values, priority: randomPriority });
+      // Since the main AI failed (likely due to rate limits or network issues),
+      // use a purely local, rule-based fallback.
+      let fallbackPriority: Priority = 'Low';
+      const symptoms = values.symptomDescription.toLowerCase();
+      if (symptoms.includes('chest pain') || symptoms.includes('breathing') || symptoms.includes('unconscious') || symptoms.includes('severe bleeding')) {
+          fallbackPriority = 'Critical';
+      } else if (symptoms.includes('severe pain') || symptoms.includes('high fever') || symptoms.includes('head injury')) {
+          fallbackPriority = 'High';
+      } else if (symptoms.includes('abdominal pain') || symptoms.includes('moderate pain') || symptoms.includes('persistent cough')) {
+          fallbackPriority = 'Medium';
+      }
+      
+      onAddPatient({ ...values, priority: fallbackPriority });
+      
+      toast({
+          title: "AI Triage Unavailable",
+          description: `Using local rule-based fallback. Priority set to ${fallbackPriority}.`,
+          variant: "default"
+      });
+      
       form.reset();
     } finally {
         setIsSubmitting(false);
