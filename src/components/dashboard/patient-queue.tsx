@@ -37,7 +37,7 @@ export function PatientQueue({ patients, onUpdatePriority }: PatientQueueProps) 
         <CardTitle>Patient Queue</CardTitle>
         <CardDescription>Live view of patients sorted by triage priority.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden">
+      <CardContent className="flex-grow overflow-hidden min-h-0">
         <ScrollArea className="h-full">
             <Table>
             <TableHeader className="sticky top-0 bg-card">
