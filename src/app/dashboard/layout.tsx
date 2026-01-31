@@ -16,11 +16,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [auth, user, isUserLoading]);
   
+  // We must wait for the user to be authenticated before trying to fetch data.
+  const canRenderContent = !isUserLoading && user;
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-        {isUserLoading ? <Skeleton className="h-[80vh] w-full" /> : children}
+        {canRenderContent ? children : <Skeleton className="h-[80vh] w-full" />}
       </main>
     </div>
   );
