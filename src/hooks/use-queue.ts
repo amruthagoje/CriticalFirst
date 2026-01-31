@@ -1,10 +1,8 @@
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
 import type { Patient, Priority, QueueStats, PatientWithWaitTime } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { monitorQueueAndAlert } from '@/ai/flows/realtime-queue-alerts';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -109,41 +107,26 @@ export function useQueue() {
     });
   }, [toast]);
 
-  const checkQueueAlerts = useCallback(async () => {
-    const queueDataForAI = sortedPatients
-      .filter(p => p.priority === 'Critical')
-      .map((p) => {
-        const now = new Date().getTime();
-        const registrationTime = new Date(p.registrationTime).getTime();
-        const waitTime = (now - registrationTime) / (1000 * 60); // in minutes
-        return {
-          patientId: p.id,
-          priority: p.priority,
-          waitTime: Math.round(waitTime),
-        };
-      });
+  const checkQueueAlerts = useCallback(() => {
+    const criticalPatients = sortedPatients.filter(p => p.priority === 'Critical');
 
-    if (queueDataForAI.length === 0) return;
+    if (criticalPatients.length === 0) return;
 
-    try {
-      const result = await monitorQueueAndAlert({
-        criticalPatientWaitTimeThreshold: CRITICAL_WAIT_THRESHOLD,
-        queueData: queueDataForAI,
-      });
+    criticalPatients.forEach(patient => {
+      const now = new Date().getTime();
+      const registrationTime = new Date(patient.registrationTime).getTime();
+      const waitTime = (now - registrationTime) / (1000 * 60); // in minutes
 
-      result.alerts?.forEach(alert => {
-        const patient = patients.find(p => p.id === alert.patientId);
+      if (waitTime > CRITICAL_WAIT_THRESHOLD) {
         toast({
-          title: `🚨 Critical Alert for ${patient?.name || alert.patientId}`,
-          description: alert.message,
-          variant: "destructive",
+          title: `🚨 Critical Alert for ${patient.name}`,
+          description: `Patient has been waiting for over ${CRITICAL_WAIT_THRESHOLD} minutes and requires immediate attention.`,
+          variant: 'destructive',
           duration: 10000,
         });
-      });
-    } catch (error) {
-      console.error("Error checking queue alerts:", error);
-    }
-  }, [sortedPatients, toast, patients]);
+      }
+    });
+  }, [sortedPatients, toast]);
 
 
   return {
