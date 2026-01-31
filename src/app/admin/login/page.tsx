@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Header } from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -60,7 +61,12 @@ export default function AdminLoginPage() {
         <main className="flex flex-1 items-center justify-center p-6">
             <Card className="w-full max-w-sm">
                 <form onSubmit={handleSubmit}>
-                    <CardHeader className="text-center">
+                    <CardHeader className="relative text-center">
+                        <Link href="/" className="absolute left-6 top-6">
+                            <Button variant="outline" size="sm" type="button">
+                                Back
+                            </Button>
+                        </Link>
                         <CardTitle className="text-2xl">{isSignUp ? 'Create Admin Account' : 'Admin Login'}</CardTitle>
                         <CardDescription>
                             {isSignUp ? 'Create an account to get started.' : 'Sign in to manage the triage system.'}
