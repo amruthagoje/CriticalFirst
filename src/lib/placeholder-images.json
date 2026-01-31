@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-image",
-      "description": "Hero image for CriticalFirst landing page",
-      "imageUrl": "https://images.unsplash.com/photo-1683792337566-e305745c15ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxob3NwaXRhbCUyMGVtZXJnZW5jeXxlbnwwfHx8fDE3Njk4NzA5MzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "hospital emergency"
+      "description": "Hero image for CriticalFirst landing page, showing medical technology",
+      "imageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba9996a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtZWRpY2FsJTIwdGVjaG5vbG9neXxlbnwwfHx8fDE3NzA0NTI5NjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medical technology"
     }
   ]
 }
