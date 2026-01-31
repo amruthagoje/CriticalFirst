@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { Patient, Priority } from '@/lib/types';
-import { semanticTriage } from '@/ai/flows/semantic-triage';
+import { offlineSymptomFallback } from '@/ai/flows/offline-symptom-fallback';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -41,7 +41,7 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
     setIsSubmitting(true);
     try {
       // Online: AI-assisted triage
-      const triageResult = await semanticTriage({ symptomDescription: values.symptomDescription });
+      const triageResult = await offlineSymptomFallback({ symptomDescription: values.symptomDescription });
       const priority = triageResult.priority;
       onAddPatient({ ...values, priority });
       form.reset();
