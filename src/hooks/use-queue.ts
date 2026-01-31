@@ -81,13 +81,13 @@ export function useQueue() {
   }, [firestore, patients, toast]);
 
   const simulatePatientSurge = useCallback(() => {
-    const surgePatients: Omit<Patient, 'id'>[] = [
-      { tokenNumber: 201, name: 'Surge Patient A', age: 50, symptomDescription: 'Difficulty breathing', priority: 'Critical', registrationTime: new Date().toISOString() },
-      { tokenNumber: 202, name: 'Surge Patient B', age: 33, symptomDescription: 'Broken arm', priority: 'High', registrationTime: new Date().toISOString() },
-      { tokenNumber: 203, name: 'Surge Patient C', age: 41, symptomDescription: 'Migraine', priority: 'Medium', registrationTime: new Date().toISOString() },
+    const surgePatients: Omit<Patient, 'id' | 'tokenNumber'>[] = [
+      { name: 'Surge Patient A', age: 50, symptomDescription: 'Difficulty breathing', priority: 'Critical', registrationTime: new Date().toISOString() },
+      { name: 'Surge Patient B', age: 33, symptomDescription: 'Broken arm', priority: 'High', registrationTime: new Date().toISOString() },
+      { name: 'Surge Patient C', age: 41, symptomDescription: 'Migraine', priority: 'Medium', registrationTime: new Date().toISOString() },
     ];
-    surgePatients.forEach(p => {
-        const patientWithToken = { ...p, tokenNumber: 100 + (patients?.length || 0) + 1 + Math.random() };
+    surgePatients.forEach((p, index) => {
+        const patientWithToken = { ...p, tokenNumber: 100 + (patients?.length || 0) + 1 + index };
         addDocumentNonBlocking(patientsCollection, patientWithToken)
     });
 
