@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,11 @@ export default function AdminLoginPage() {
                                 {isSignUp ? "Sign In" : "Sign Up"}
                             </Button>
                         </div>
+                        <Button asChild variant="link" className="text-sm font-normal text-muted-foreground">
+                            <Link href="/">
+                                Back to Homepage
+                            </Link>
+                        </Button>
                     </CardFooter>
                 </form>
             </Card>
