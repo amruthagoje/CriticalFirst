@@ -30,7 +30,7 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      age: undefined,
+      age: '' as any,
       symptoms: '',
     },
   });
