@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,25 +14,43 @@ import { useToast } from '@/hooks/use-toast';
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
+        if (isSignUp) {
+            await createUserWithEmailAndPassword(auth, email, password);
+            toast({
+                title: "Account Created",
+                description: "You have been successfully signed in.",
+            });
+        } else {
+            await signInWithEmailAndPassword(auth, email, password);
+        }
+        router.push('/dashboard');
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
-      });
-      setIsLoading(false);
+        let description = "An unexpected error occurred. Please try again.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "This email is already in use. Please sign in.";
+        } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+            description = "Invalid email or password. Please try again.";
+        } else if (error.code === 'auth/weak-password') {
+            description = "Password should be at least 6 characters.";
+        }
+      
+        toast({
+            variant: "destructive",
+            title: isSignUp ? "Sign Up Failed" : "Login Failed",
+            description,
+        });
+        setIsLoading(false);
     }
   };
 
@@ -41,11 +59,11 @@ export default function AdminLoginPage() {
         <Header />
         <main className="flex flex-1 items-center justify-center p-6">
             <Card className="w-full max-w-sm">
-                <form onSubmit={handleLogin}>
+                <form onSubmit={handleSubmit}>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Admin Login</CardTitle>
+                        <CardTitle className="text-2xl">{isSignUp ? 'Create Admin Account' : 'Admin Login'}</CardTitle>
                         <CardDescription>
-                            Sign in to manage the triage system.
+                            {isSignUp ? 'Create an account to get started.' : 'Sign in to manage the triage system.'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4">
@@ -73,10 +91,16 @@ export default function AdminLoginPage() {
                             />
                         </div>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex flex-col items-center justify-center gap-4">
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? 'Signing In...' : 'Sign In'}
+                            {isLoading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
                         </Button>
+                        <div className="text-center text-sm text-muted-foreground">
+                            {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                            <Button variant="link" type="button" onClick={() => setIsSignUp(!isSignUp)} className="pl-1 text-primary">
+                                {isSignUp ? "Sign In" : "Sign Up"}
+                            </Button>
+                        </div>
                     </CardFooter>
                 </form>
             </Card>
