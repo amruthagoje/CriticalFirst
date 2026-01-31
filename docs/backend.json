@@ -1,0 +1,191 @@
+{
+  "entities": {
+    "Patient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Patient",
+      "type": "object",
+      "description": "Represents a patient in the CriticalFirst application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the patient."
+        },
+        "name": {
+          "type": "string",
+          "description": "The patient's full name."
+        },
+        "age": {
+          "type": "number",
+          "description": "The patient's age in years."
+        },
+        "symptomDescription": {
+          "type": "string",
+          "description": "Free-text description of the patient's symptoms."
+        },
+        "fever": {
+          "type": "number",
+          "description": "The patient's body temperature (optional)."
+        },
+        "oxygen": {
+          "type": "number",
+          "description": "The patient's oxygen saturation level (optional)."
+        },
+        "bp": {
+          "type": "string",
+          "description": "The patient's blood pressure (optional)."
+        },
+        "tokenNumber": {
+          "type": "string",
+          "description": "Unique token number assigned to the patient."
+        },
+        "registrationTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the patient was registered.",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string",
+          "description": "The patient's triage priority (Critical, High, Medium, Low)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "age",
+        "symptomDescription",
+        "tokenNumber",
+        "registrationTimestamp",
+        "priority"
+      ]
+    },
+    "TriageAuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TriageAuditLog",
+      "type": "object",
+      "description": "Represents an audit log entry for triage priority overrides.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the audit log entry."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N TriageAuditLog)"
+        },
+        "overrideTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the triage priority was overridden.",
+          "format": "date-time"
+        },
+        "overridingUserId": {
+          "type": "string",
+          "description": "Reference to User who performed the override. (Relationship: User 1:N TriageAuditLog)"
+        },
+        "previousPriority": {
+          "type": "string",
+          "description": "The patient's priority before the override."
+        },
+        "newPriority": {
+          "type": "string",
+          "description": "The patient's priority after the override."
+        },
+        "justification": {
+          "type": "string",
+          "description": "Reason or justification for the priority override."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "overrideTimestamp",
+        "overridingUserId",
+        "previousPriority",
+        "newPriority",
+        "justification"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user (Nurse, Doctor, Admin) in the system.  (Note: Does NOT store authentication system information.)",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role (Nurse, Doctor, Admin)."
+        }
+      },
+      "required": [
+        "id",
+        "role"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/patients/{patientId}",
+        "definition": {
+          "entityName": "Patient",
+          "schema": {
+            "$ref": "#/backend/entities/Patient"
+          },
+          "description": "Stores patient information. Includes fields like name, age, symptom description, token number, registration timestamp, and priority.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/triage_audit_logs/{logId}",
+        "definition": {
+          "entityName": "TriageAuditLog",
+          "schema": {
+            "$ref": "#/backend/entities/TriageAuditLog"
+          },
+          "description": "Stores audit logs for triage priority overrides. Includes fields like override timestamp, overriding user ID (denormalized), previous priority, new priority, and justification.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "logId",
+              "description": "Unique identifier for the triage audit log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user information (Nurse, Doctor, Admin). Includes user ID and role.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the CriticalFirst application's requirements for patient registration, triage, queue management, and offline capabilities. The structure prioritizes authorization independence, clarity, and scalability.  \n\n**Authorization Independence:** To ensure authorization independence (CRITICAL), the design avoids hierarchical authorization dependencies (`get()`). The `TriageAuditLogs` subcollection includes the `overridingUserId` to directly associate the log with the user who made the override, avoiding the need to fetch user information during security rule evaluation. This denormalization strategy enables atomic operations and simplifies security rules.\n\n**Structural Segregation:** The structure segregates data based on access requirements. User data is stored in a dedicated collection (`/users/{userId}`), and patient data is stored in a separate collection (`/patients/{patientId}`), allowing for distinct security rules.\n\n**Access Modeling:** The structure employs path-based ownership for user data (`/users/{userId}`) and leverages subcollections for related data (e.g., `/patients/{patientId}/triage_audit_logs/{logId}`).\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) by ensuring that each collection has a clear and consistent security posture. For example, listing patients requires authorization checks at the `/patients` collection level.\n\n**Invariants:** The structure supports invariants such as ownership and timestamps by enforcing data integrity through security rules and schema validation. The `registrationTimestamp` and `overrideTimestamp` fields are used to maintain the order of events and resolve conflicts during offline synchronization.\n\n**Offline Capabilities:** The structure facilitates offline capabilities by allowing local persistence of patient data and synchronization with Firestore when connectivity is restored. The use of timestamps and manual overrides for conflict resolution ensures data consistency."
+  }
+}

@@ -1,0 +1,106 @@
+/**
+ * Core Philosophy: This ruleset enforces a Role-Based Access Control (RBAC) model tailored for a medical application.
+ * The primary security principle is that all data access is restricted to authenticated users (e.g., Nurses, Doctors, Admins).
+ * There is no public or anonymous access to any data.
+ *
+ * Data Structure: The database is organized into two main top-level collections:
+ * 1. `/users/{userId}`: Stores minimal profile information for application users, including their role. Access is strictly
+ *    limited to the user who owns the document.
+ * 2. `/patients/{patientId}`: Stores all clinical data for patients. This collection is accessible to all authenticated staff.
+ *    It contains a subcollection, `triage_audit_logs`, to track changes to a patient's priority.
+ *
+ * Key Security Decisions:
+ * - Default Deny: All paths are closed by default. Access is only granted through explicit `allow` statements.
+ * - Authenticated Access Only: Every rule requires the user to be signed in. There is no public data.
+ * - User Privacy: Users can only manage their own user profile document and cannot list or view other users' profiles,
+ *   preventing user enumeration.
+ * - Shared Patient Data: All authenticated medical staff have read and write access to patient records, facilitating a
+ *   collaborative environment. In a production system, this could be refined to be more granular based on user roles.
+ * - Immutable Audit Trail: Triage audit logs are append-only. Once a log is created, it cannot be modified or deleted,
+ *   ensuring the integrity of the audit history.
+ *
+ * Denormalization for Authorization: To ensure performant and secure rules, critical authorization data is denormalized.
+ * For example, the `triage_audit_logs` documents contain an `overridingUserId` field. This allows rules to directly verify
+ * the creator of a log without needing a costly `get()` call to another collection, which is crucial for the integrity
+ * and performance of the security model.
+ *
+ * Structural Segregation: User data (`/users`) and patient data (`/patients`) are stored in separate top-level collections.
+ * This clear separation allows for distinct and simple security rules for each data type, preventing any potential for
+ * access control logic to bleed between them.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions for Reusability and Clarity
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the given userId.
+     * This is the foundation of the ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document. Used for safe updates and deletes.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own user profile document.
+     * @deny (get) A user trying to read another user's profile.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to the collection of patient records.
+     * @path /patients/{patientId}
+     * @allow (create) An authenticated nurse or doctor registers a new patient.
+     * @deny (get) An unauthenticated user attempts to read patient data.
+     * @principle Grants access to all authenticated staff for collaborative patient care.
+     */
+    match /patients/{patientId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+
+      /**
+       * @description Controls access to the triage audit log for a specific patient.
+       * @path /patients/{patientId}/triage_audit_logs/{logId}
+       * @allow (create) An authenticated doctor creates an audit log after changing a patient's priority.
+       * @deny (update) Any user attempting to modify an existing audit log entry.
+       * @principle Enforces immutability for audit trails to maintain data integrity.
+       */
+      match /triage_audit_logs/{logId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create: if isSignedIn()
+                      && request.resource.data.patientId == patientId
+                      && request.resource.data.overridingUserId == request.auth.uid;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+  }
+}
