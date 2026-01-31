@@ -15,7 +15,7 @@ import { useState } from 'react';
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   age: z.coerce.number().min(0, { message: 'Age must be a positive number.' }).max(120),
-  symptoms: z.string().min(10, { message: 'Symptom description must be at least 10 characters.' }),
+  symptomDescription: z.string().min(10, { message: 'Symptom description must be at least 10 characters.' }),
 });
 
 type PatientFormValues = z.infer<typeof formSchema>;
@@ -30,7 +30,8 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      symptoms: '',
+      age: 0,
+      symptomDescription: '',
     },
   });
 
@@ -38,7 +39,7 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
     setIsSubmitting(true);
     try {
       // Online: AI-assisted triage
-      const triageResult = await semanticTriage({ symptomDescription: values.symptoms });
+      const triageResult = await semanticTriage({ symptomDescription: values.symptomDescription });
       const priority = triageResult.priority;
       onAddPatient({ ...values, priority });
       form.reset();
@@ -93,7 +94,7 @@ export function PatientRegistrationForm({ onAddPatient }: PatientRegistrationFor
             />
             <FormField
               control={form.control}
-              name="symptoms"
+              name="symptomDescription"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Symptom Description</FormLabel>

@@ -5,9 +5,9 @@ export interface Patient {
   tokenNumber: number;
   name: string;
   age: number;
-  symptoms: string;
+  symptomDescription: string;
   priority: Priority;
-  registrationTime: Date;
+  registrationTime: string;
 }
 
 export interface PatientWithWaitTime extends Patient {

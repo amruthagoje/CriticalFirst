@@ -59,7 +59,7 @@ export function PatientQueue({ patients, onUpdatePriority }: PatientQueueProps) 
                         <div className="font-medium">{patient.name}</div>
                         <div className="text-sm text-muted-foreground">{patient.age} years old</div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-[300px] truncate">{patient.symptoms}</TableCell>
+                    <TableCell className="hidden md:table-cell max-w-[300px] truncate">{patient.symptomDescription}</TableCell>
                     <TableCell className="text-right">{formatWaitTime(patient.estimatedWaitTime)}</TableCell>
                     <TableCell className="text-center">
                         <Badge variant={priorityVariantMap[patient.priority]} className="capitalize">

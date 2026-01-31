@@ -8,11 +8,13 @@ import { AdminPanel } from '@/components/dashboard/admin-panel';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { BarChart, Users, AlertTriangle, Clock } from 'lucide-react';
 import { formatWaitTime } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function DashboardPage() {
   const { 
     patients, 
+    isLoading,
     stats, 
     addPatient, 
     updatePriority, 
@@ -39,7 +41,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:grid-cols-3">
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-           <PatientQueue patients={patients} onUpdatePriority={updatePriority} />
+           {isLoading ? <Skeleton className="h-[70vh] w-full" /> : <PatientQueue patients={patients} onUpdatePriority={updatePriority} />}
         </div>
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
             <PatientRegistrationForm onAddPatient={addPatient} />

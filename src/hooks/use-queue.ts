@@ -2,10 +2,13 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { initialPatients } from '@/lib/data';
 import type { Patient, Priority, QueueStats, PatientWithWaitTime } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { monitorQueueAndAlert } from '@/ai/flows/realtime-queue-alerts';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 const AVG_SERVICE_TIME = 15; // Average service time in minutes
 const CRITICAL_WAIT_THRESHOLD = 20; // 20 minutes for critical patients
@@ -18,15 +21,20 @@ const priorityOrder: Record<Priority, number> = {
 };
 
 export function useQueue() {
-  const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const firestore = useFirestore();
+  const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
+  const { data: patientsFromDb, isLoading } = useCollection<Patient>(patientsCollection);
+  
   const [staffCount, setStaffCount] = useState(5);
   const { toast } = useToast();
+
+  const patients = useMemo(() => patientsFromDb || [], [patientsFromDb]);
 
   const sortedPatients = useMemo(() => {
     return [...patients].sort((a, b) => {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      return a.registrationTime.getTime() - b.registrationTime.getTime();
+      return new Date(a.registrationTime).getTime() - new Date(b.registrationTime).getTime();
     });
   }, [patients]);
 
@@ -48,23 +56,23 @@ export function useQueue() {
   }, [patients, patientsWithWaitTime, staffCount]);
 
   const addPatient = useCallback((newPatientData: Omit<Patient, 'id' | 'tokenNumber' | 'registrationTime'>) => {
-    setPatients(prev => {
-      const newPatient: Patient = {
+    const newPatient = {
         ...newPatientData,
-        id: `p${prev.length + 10}`,
-        tokenNumber: 100 + prev.length + 1,
-        registrationTime: new Date(),
-      };
-      return [...prev, newPatient];
-    });
+        tokenNumber: 100 + (patients?.length || 0) + 1,
+        registrationTime: new Date().toISOString(),
+    };
+    addDocumentNonBlocking(patientsCollection, newPatient);
+
     toast({
       title: "Patient Registered",
       description: `${newPatientData.name} has been added to the queue with ${newPatientData.priority} priority.`,
     })
-  }, [toast]);
+  }, [patients, patientsCollection, toast]);
 
   const updatePriority = useCallback((patientId: string, priority: Priority) => {
-    setPatients(prev => prev.map(p => p.id === patientId ? { ...p, priority } : p));
+    const patientDocRef = doc(firestore, 'patients', patientId);
+    updateDocumentNonBlocking(patientDocRef, { priority });
+
     const patient = patients.find(p => p.id === patientId);
     if(patient) {
         toast({
@@ -72,21 +80,25 @@ export function useQueue() {
             description: `${patient.name}'s priority has been changed to ${priority}.`,
         });
     }
-  }, [patients, toast]);
+  }, [firestore, patients, toast]);
 
   const simulatePatientSurge = useCallback(() => {
-    const surgePatients: Patient[] = [
-      { id: `p${patients.length + 20}`, tokenNumber: 201, name: 'Surge Patient A', age: 50, symptoms: 'Difficulty breathing', priority: 'Critical', registrationTime: new Date() },
-      { id: `p${patients.length + 21}`, tokenNumber: 202, name: 'Surge Patient B', age: 33, symptoms: 'Broken arm', priority: 'High', registrationTime: new Date() },
-      { id: `p${patients.length + 22}`, tokenNumber: 203, name: 'Surge Patient C', age: 41, symptoms: 'Migraine', priority: 'Medium', registrationTime: new Date() },
+    const surgePatients: Omit<Patient, 'id'>[] = [
+      { tokenNumber: 201, name: 'Surge Patient A', age: 50, symptomDescription: 'Difficulty breathing', priority: 'Critical', registrationTime: new Date().toISOString() },
+      { tokenNumber: 202, name: 'Surge Patient B', age: 33, symptomDescription: 'Broken arm', priority: 'High', registrationTime: new Date().toISOString() },
+      { tokenNumber: 203, name: 'Surge Patient C', age: 41, symptomDescription: 'Migraine', priority: 'Medium', registrationTime: new Date().toISOString() },
     ];
-    setPatients(prev => [...prev, ...surgePatients]);
+    surgePatients.forEach(p => {
+        const patientWithToken = { ...p, tokenNumber: 100 + (patients?.length || 0) + 1 + Math.random() };
+        addDocumentNonBlocking(patientsCollection, patientWithToken)
+    });
+
     toast({
         title: "Simulation: Patient Surge",
         description: "Patient volume has significantly increased.",
         variant: "destructive",
     });
-  }, [patients.length, toast]);
+  }, [patients, patientsCollection, toast]);
 
   const simulateStaffDrop = useCallback(() => {
     setStaffCount(prev => Math.max(1, Math.floor(prev * 0.6)));
@@ -102,7 +114,7 @@ export function useQueue() {
       .filter(p => p.priority === 'Critical')
       .map((p) => {
         const now = new Date().getTime();
-        const registrationTime = p.registrationTime.getTime();
+        const registrationTime = new Date(p.registrationTime).getTime();
         const waitTime = (now - registrationTime) / (1000 * 60); // in minutes
         return {
           patientId: p.id,
@@ -136,6 +148,7 @@ export function useQueue() {
 
   return {
     patients: patientsWithWaitTime,
+    isLoading,
     stats,
     addPatient,
     updatePriority,
