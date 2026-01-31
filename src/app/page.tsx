@@ -3,8 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Cpu, Users, AlertTriangle, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function LandingPage() {
+  const heroImage = PlaceHolderImages.find(p => p.id === 'hero-image');
+
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
       <Header />
@@ -30,7 +34,16 @@ export default function LandingPage() {
                   </Button>
                 </div>
               </div>
-              {/* Maybe an image here later */}
+              {heroImage && (
+                <Image
+                  src={heroImage.imageUrl}
+                  alt={heroImage.description}
+                  width={600}
+                  height={400}
+                  className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
+                  data-ai-hint={heroImage.imageHint}
+                />
+              )}
             </div>
           </div>
         </section>
